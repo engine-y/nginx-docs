@@ -20,7 +20,7 @@
 hg clone http://hg.nginx.org/njs
 ```
 
-该模块也可以构建为[动态形式](../核心功能.md#load_module)：
+该模块也可以构建为[动态形式](../ngx_core_module.md#load_module)：
 
 ```
 ./configure --add-dynamic-module=path-to-njs/nginx

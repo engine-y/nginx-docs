@@ -9,6 +9,7 @@
     - [hash](#hash)
     - [ip_hash](#ip_hash)
     - [keepalive](#keepalive)
+    - [keepalive_time](#keepalive_time)
     - [keepalive_requests](#keepalive_requests)
     - [keepalive_timeout](#keepalive_timeout)
     - [ntlm](#ntlm)
@@ -16,6 +17,8 @@
     - [least_time](#least_time)
     - [queue](#queue)
     - [random](#random)
+    - [resolver](#resolver)
+    - [resolver_timeout](#resolver_timeout)
     - [sticky](#sticky)
     - [sticky_cookie_insert](#sticky_cookie_insert)
 - [内部变量](#embedded_variables)
@@ -117,7 +120,7 @@ upstream backend {
 
     限制与被代理服务器的最大并发活动连接数（`number`）（1.11.5）。默认值为零，表示没有限制。如果服务器组不驻留在[共享内存](ngx_http_upstream_module.md#zone)中，则每个worker 进程的限制都有效。
 
-    > 如果启用了[空闲 keepalive](ngx_http_upstream_module.md#keepalive) 连接、多个 [worker 进程](../核心功能.md#worker_processes)和[共享内存](ngx_http_upstream_module.md#zone)，则被代理服务器的活动和空闲连接总数可能会超过 `max_conns` 的值。
+    > 如果启用了[空闲 keepalive](ngx_http_upstream_module.md#keepalive) 连接、多个 [worker 进程](../ngx_core_module.md#worker_processes)和[共享内存](ngx_http_upstream_module.md#zone)，则被代理服务器的活动和空闲连接总数可能会超过 `max_conns` 的值。
 
     > 自 1.5.9 版本至 1.11.5 版本之前，此参数为[商业订阅](http://nginx.com/products/?_ga=2.268156877.259929927.1564163363-1186072494.1564163363)部分。
 
@@ -374,6 +377,17 @@ server {
 
 设置可通过一个 keepalive 连接提供的最大请求数。在达到最大请求数后，连接将关闭。
 
+### keepalive_time
+
+|\-|说明|
+|:------|:------|
+|**语法**|**keepalive_time** `time`;|
+|**默认**|keepalive_time 1h;|
+|**上下文**|upstream|
+|**提示**|该指令在 1.19.10 版本中出现|
+
+限制一个keepalive连接处理请求的最长时间。达到这个时间后，连接在后续请求处理后关闭。
+
 ### keepalive_timeout
 
 |\-|说明|
@@ -383,7 +397,7 @@ server {
 |**上下文**|upstream|
 |**提示**|该指令在 1.15.3 版本中出现|
 
-设置超时时间，在此期间与 upstream 服务器的空闲 keepalive 连接将保持打开状态。
+指定一个keepalive连接最长idle时间，过期将关闭连接。
 
 ### ntlm
 
@@ -482,6 +496,46 @@ server {
 `least_time` 方法将请求传递给平均响应时间最短且活动连接数最少的服务器。如果指定了 `least_time=header`，则使用接收[响应头](ngx_http_upstream_module.md#var_upstream_header_time)的时间。如果指定了 `least_time=last_byte`，则使用接收[完整响应](ngx_http_upstream_module.md#var_upstream_response_time)的时间。
 
 > `least_time` 方法作为[商业订阅](http://nginx.com/products/?_ga=2.27050036.860729840.1564753618-1186072494.1564163363)部分提供。
+
+### resolver
+
+|\-|说明|
+|:------|:------|
+|**语法**|**resolver** `address ... [valid=time] [ipv6=on`&#124;`off] [status_zone=zone]`;|
+|**默认**|——|
+|**上下文**|upstream|
+|**提示**|该指令在 1.17.5 版本中出现|
+
+配置名称服务器，用于将上游服务器的名称解析为地址，例如：
+
+```nginx
+resolver 127.0.0.1 [::1]:5353;
+```
+该地址可以指定为域名或 IP 地址，并带有可选的端口。如果未指定端口，则使用端口 53。以循环方式查询名称服务器。
+
+默认情况下，nginx 在解析时会同时查找 IPv4 和 IPv6 地址。如果不需要查找 IPv6 地址，则ipv6=off可以指定该参数。
+
+默认情况下，nginx 使用响应的 TTL 值缓存结果。可选valid参数允许覆盖它：
+
+```nginx
+resolver 127.0.0.1 [::1]:5353 valid=30s;
+```
+> 为防止 DNS 欺骗，建议在安全可靠的本地网络中配置 DNS 服务器。
+
+可选status_zone参数允许 收集 指定的请求和响应的 DNS 服务器统计信息到`zone`。
+
+> status_zone 指令作为我们商业订阅的一部分提供。
+
+### resolver_timeout
+
+|\-|说明|
+|:------|:------|
+|**语法**|**resolver_timeout** `time`;|
+|**默认**|resolver_timeout 30s|
+|**上下文**|upstream|
+|**提示**|该指令在 1.17.5 版本中出现|
+
+设置域名解析超时时间。
 
 ### sticky
 
@@ -599,7 +653,7 @@ server {
 
     `sync` 参数（1.13.8）启用共享内存区域[同步](../stream/ngx_stream_zone_sync_module.md#zone_sync)。
 
-> 该指令作为[商业订阅](http://nginx.com/products/?_ga=2.25871412.860729840.1564753618-1186072494.1564163363)部分提供。
+> 该指令作为[商业订阅](http://nginx.com/products) 部分提供。
 
 ### sticky_cookie_insert
 

@@ -95,7 +95,7 @@ location / {
 uwsgi_bind $remote_addr transparent;
 ```
 
-为了使该参数起作用，通常必须使用[超级用户](../核心功能.md#user)特权运行 nginx 工作进程。在 Linux 上不需要这样做（1.13.8），就像指定了 `transparent` 参数一样，工作进程从主进程继承 `CAP_NET_RAW` 功能。还必须配置内核路由表以拦截来自 uwsgi 服务器的网络流量。
+为了使该参数起作用，通常必须使用[超级用户](../ngx_core_module.md#user)特权运行 nginx 工作进程。在 Linux 上不需要这样做（1.13.8），就像指定了 `transparent` 参数一样，工作进程从主进程继承 `CAP_NET_RAW` 功能。还必须配置内核路由表以拦截来自 uwsgi 服务器的网络流量。
 
 ### uwsgi_buffer_size
 
@@ -910,7 +910,7 @@ uwsgi_pass unix:/tmp/uwsgi.socket;
 |**默认**|uwsgi_store off;|
 |**上下文**|http、server、location|
 
-允许将文件保存到磁盘。`on` 参数保存文件的路径相对于 [alias](../核心功能.md#alias) 或 [root](../核心功能.md#root) 指令。`off` 参数禁用文件保存。另外，可以使用带有变量的字符串来显式设置文件名：
+允许将文件保存到磁盘。`on` 参数保存文件的路径相对于 [alias](../ngx_core_module.md#alias) 或 [root](../ngx_core_module.md#root) 指令。`off` 参数禁用文件保存。另外，可以使用带有变量的字符串来显式设置文件名：
 
 ```nginx
 uwsgi_store /data/www$original_uri;

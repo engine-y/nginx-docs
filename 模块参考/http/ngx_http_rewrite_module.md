@@ -189,7 +189,7 @@ rewrite ^/users/(.*)$ /show?user=$1? last;
 |**默认**|rewrite_log off;|
 |**上下文**|http、server、location、if|
 
-启用或禁用在 `notice` 级别将 `ngx_http_rewrite_module` 模块指令处理结果记录到 [error_log](../核心功能.md#error_log) 中。
+启用或禁用在 `notice` 级别将 `ngx_http_rewrite_module` 模块指令处理结果记录到 [error_log](../ngx_core_module.md#error_log) 中。
 
 ### set
 

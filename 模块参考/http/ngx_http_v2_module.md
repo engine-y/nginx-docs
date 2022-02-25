@@ -171,7 +171,7 @@ http2_push /static/css/main.css;
 |**默认**|http2_recv_buffer_size 256k;|
 |**上下文**|http|
 
-设置每个[工作进程](../核心功能.md#worker_processes)输入缓冲区的大小（`size`）。
+设置每个[工作进程](../ngx_core_module.md#worker_processes)输入缓冲区的大小（`size`）。
 
 ### http2_recv_timeout
 

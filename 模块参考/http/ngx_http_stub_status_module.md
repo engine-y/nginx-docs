@@ -59,7 +59,7 @@ Reading: 6 Writing: 179 Waiting: 106
 
 - `handled`
 
-    已处理连接的总数。通常，参数值与 `accept` 相同，除非已达到某些资源限制阈值（例如，[worker_connections](../核心功能.md#worker_connections) 限制）。
+    已处理连接的总数。通常，参数值与 `accept` 相同，除非已达到某些资源限制阈值（例如，[worker_connections](../ngx_core_module.md#worker_connections) 限制）。
 
 - `requests`
 

@@ -34,7 +34,7 @@
 
 为了减轻处理器负载，建议：
 
-- 将 [worker 进程](../核心功能.md#worker_processes)数设置为与处理器数量相等
+- 将 [worker 进程](../ngx_core_module.md#worker_processes)数设置为与处理器数量相等
 - 启用[共享](#ssl_session_cache_shared)会话缓存
 - 禁用[内置](#ssl_session_cache_builtin)的会话缓存
 - 可以延长会话的[生命周期](#ssl_session_timeout)（默认为 5 分钟）
@@ -102,7 +102,7 @@ server {
 
 > 仅 OpenSSL 1.0.2 或更高版本支持不同证书的独立证书链。对于较旧的版本，只能使用一个证书链。
 
-可以指定 `data:certificate` 值来代替 `file`（1.15.10），无需使用文件即可加载证书。请注意，错误使用此语法可能会带来安全隐患，例如将密钥数据写入[错误日志](../核心功能.md#error_log)。
+可以指定 `data:certificate` 值来代替 `file`（1.15.10），无需使用文件即可加载证书。请注意，错误使用此语法可能会带来安全隐患，例如将密钥数据写入[错误日志](../ngx_core_module.md#error_log)。
 
 ### ssl_certificate_key
 
@@ -116,7 +116,7 @@ server {
 
 可以指定 `engine:name:id` 来代替 `file`（1.7.9），Nginx 将从名称为 `name` 的 OpenSSL 引擎中中加载 id 为 `id` 的密钥。
 
-可以指定 `data:key` 值来代替 `file`（1.15.10），无需使用文件就可以加载密钥。请注意，错误使用此语法可能会带来安全隐患，例如将密钥数据写入[错误日志](../核心功能.md#error_log)。
+可以指定 `data:key` 值来代替 `file`（1.15.10），无需使用文件就可以加载密钥。请注意，错误使用此语法可能会带来安全隐患，例如将密钥数据写入[错误日志](../ngx_core_module.md#error_log)。
 
 ### ssl_ciphers
 

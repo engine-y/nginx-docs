@@ -81,7 +81,7 @@ location / {
 scgi_bind $remote_addr transparent;
 ```
 
-为了使此参数起作用，通常需要使用[超级用户](../核心功能.md#user)权限运行 nginx worker 进程。在 Linux 上，不需要（1.13.8）像指定 `transparent` 参数一样，worker 进程从 master 进程继承 `CAP_NET_RAW` 功能。还需要配置内核路由表以拦截来自 SCGI 服务器的网络流量。
+为了使此参数起作用，通常需要使用[超级用户](../ngx_core_module.md#user)权限运行 nginx worker 进程。在 Linux 上，不需要（1.13.8）像指定 `transparent` 参数一样，worker 进程从 master 进程继承 `CAP_NET_RAW` 功能。还需要配置内核路由表以拦截来自 SCGI 服务器的网络流量。
 
 ### scgi_buffer_size
 

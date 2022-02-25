@@ -143,7 +143,7 @@ userid_p3p     'policyref="/w3c/p3p.xml", CP="CUR ADM OUR NOR STA NID"';
 
 - `$uid_reset`
 
-    如果变量设置为非空字符串且非 `"0"`，则重置客户端标识符。特殊值 `log` 会将关于重置标识符的消息输出到 [error_log](../核心功能.md#error_log)。
+    如果变量设置为非空字符串且非 `"0"`，则重置客户端标识符。特殊值 `log` 会将关于重置标识符的消息输出到 [error_log](../ngx_core_module.md#error_log)。
 
 <a id="uid_set"></a>
 

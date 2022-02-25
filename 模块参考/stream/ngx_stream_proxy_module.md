@@ -83,7 +83,7 @@ server {
 proxy_bind $remote_addr transparent;
 ```
 
-为了使此参数生效，通常必须使用[超级用户特权](../核心功能.md#user)运行 nginx worker 进程。在 Linux上，如果指定了 `transparent` 则不需要（1.13.8），worker 进程从 master 进程继承 `CAP_NET_RAW` 能力。还需要配置内核路由表以拦截来自被代理服务器的网络流量。
+为了使此参数生效，通常必须使用[超级用户特权](../ngx_core_module.md#user)运行 nginx worker 进程。在 Linux上，如果指定了 `transparent` 则不需要（1.13.8），worker 进程从 master 进程继承 `CAP_NET_RAW` 能力。还需要配置内核路由表以拦截来自被代理服务器的网络流量。
 
 ### proxy_buffer_size
 

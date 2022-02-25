@@ -30,7 +30,7 @@
   - [贡献指南](开发/贡献指南.md)
   - 开发指南
 - 模块参考
-- [核心功能](模块参考/核心功能.md)
+- [核心功能](模块参考/ngx_core_module.md)
   - HTTP
     - [ngx_http_core_module](模块参考/http/ngx_http_core_module.md)
     - [ngx_http_access_module](模块参考/http/ngx_http_access_module.md)

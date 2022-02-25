@@ -8,7 +8,7 @@
 $ git clone git@github.com:yourname/nginx-docs.git
 $ cd nginx-docs
 # 将项目与上游关联
-$ git remote add source git@github.com:DocsHome/nginx-docs.git
+$ git remote add source git@github.com:engine-y/nginx-docs.git
 ```
 
 * 增加内容或者修复错误后提交，并推送到自己的仓库。

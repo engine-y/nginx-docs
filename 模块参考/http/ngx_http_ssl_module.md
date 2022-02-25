@@ -138,7 +138,7 @@ ssl_certificate_key $ssl_server_name.key;
 
 请注意，使用变量意味着每次 SSL 握手都会加载证书，这可能会对性能产生负面影响。
 
-可以指定值 `data:$variable` 来代替 `file`（1.15.10），证书将从变量中加载而不使用中间文件。请注意，不恰当地使用此语法可能会产生安全隐患，例如将密钥数据写入[错误日志](../核心功能.md#error_log)。
+可以指定值 `data:$variable` 来代替 `file`（1.15.10），证书将从变量中加载而不使用中间文件。请注意，不恰当地使用此语法可能会产生安全隐患，例如将密钥数据写入[错误日志](../ngx_core_module.md#error_log)。
 
 记住，由于 HTTPS 协议对最大互操作性的限制，虚拟服务器应[监听不同的 IP 地址](configuring_https_servers.md#name_based_https_servers)。
 
@@ -154,7 +154,7 @@ ssl_certificate_key $ssl_server_name.key;
 
 可以指定值 `engine:name:id` 来代替是 `file`（1.7.9），从 OpenSSL 引擎 `name` 加载有指定 `id` 的密钥。
 
-可以指定值 `data:$variable` 替代 `file`（1.15.10），将从变量加载密钥而不使用中间文件。请注意，不恰当地使用此语法可能会产生安全隐患，例如将密钥数据写入[错误日志](../核心功能.md#error_log)。
+可以指定值 `data:$variable` 替代 `file`（1.15.10），将从变量加载密钥而不使用中间文件。请注意，不恰当地使用此语法可能会产生安全隐患，例如将密钥数据写入[错误日志](../ngx_core_module.md#error_log)。
 
 从 1.15.9 版本开始，使用 OpenSSL 1.0.2 或更高版本时，可在 `file` 文件名中使用变量。
 

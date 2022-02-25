@@ -7,8 +7,8 @@
     - [daemon](#daemon)
     - [debug_connection](#debug_connection)
     - [debug_points](#debug_points)
-    - [error_log](#error_log)
     - [env](#env)
+    - [error_log](#error_log)
     - [events](#events)
     - [include](#include)
     - [load_module](#load_module)
@@ -61,7 +61,7 @@ events {
 |**默认**|accept_mutex off;|
 |**上下文**|events|
 
-如果启用了 `accept_mutex`，则工作进程将轮流接受新连接。否则，将新连接通知给所有工作进程，如果新连接数量较少，某些工作进程可能会浪费系统资源。
+如果启用了 `accept_mutex`，则工作进程将依次接受新连接。否则，将新连接通知给所有工作进程，如果新连接数量较少，某些工作进程可能会浪费系统资源。
 
 > 在支持 [EPOLLEXCLUSIVE](http://nginx.org/en/docs/events.html#epoll) 标志（1.11.3）或使用 [reuseport](#reuseport) 的系统上，不需要启用 `accept_mutex`。
 
@@ -75,7 +75,7 @@ events {
 |**默认**|accept_mutex_delay 500ms;|
 |**上下文**|events|
 
-如果启用了 [accept_mutex](#accept_mutex)，则指定如果另一个工作进程正在接受新连接，则工作进程将尝试重新启动以接受新连接的最长时间。
+如果启用了 [accept_mutex](#accept_mutex)，表示工作进程将依次接受连接。当另一个工作进程正在接受新连接时，当前工作进程重新尝试接受连接的等待时间。
 
 ### daemon
 
@@ -85,7 +85,7 @@ events {
 |**默认**|daemon on;|
 |**上下文**|main|
 
-决定 nginx 是否应该成为守护进程。主要用于开发。
+是否将 nginx 启动为守护进程模式。主要用于开发，关闭daemon用于接受断点。
 
 ### debug_connection
 
@@ -121,25 +121,8 @@ events {
 
 该指令用于调试。
 
-当检测到内部错误时，例如，在重新启动工作流程时，发生套接字泄漏，启用 `debug_points` 会导致核心文件创建（`abort`）或停止（`stop`）进程以使用系统调试器进行进一步分析。
+当检测到内部错误时，例如，在重新启动工作流程时，发生套接字泄漏，启用 `debug_points` 会导致核心创建文件（`abort`）或停止进程（`stop`）以使用系统调试器进行进一步分析。
 
-### error_log
-
-|\-|说明|
-|------:|------|
-|**语法**|**error_log** `file [level]`;|
-|**默认**|error_log logs/error.log error;|
-|**上下文**|main、http、mail、stream、server、location|
-
-配置日志。可以在同一级别指定几个日志（1.5.2）。如果在 `main` 配置级别将日志写入一个未明确定义文件，则将使用默认文件。
-
-第一个参数定义了一个将存储日志的 `file`。特殊值 `stderr` 选择标准错误文件。可以通过指定 `syslog:` 前缀来配置记录日志到 [syslog](../介绍/记录日志到syslog.md)。可以通过指定 `memory:` 前缀和缓冲区 `size` 来配置记录日志到[循环内存缓冲区](../介绍/记录日志到syslog.md)，此通常用于调试（1.7.11）。
-
-第二个参数确定日志记录的 `level`，可以是以下之一：`debug`、`info`、`notice`、`warn`、`error`、`crit`、`alert` 或`emerg`。上述日志级别按严重性递增排列。设置某个日志级别将造成所有指定的消息和更严重的日志级别被记录。例如，默认级别 `error` 将导致 `error`、`crit`、`alert`和 `emerg` 消息被记录。如果省略此参数，则使用 `error`。
-
-> 为了使 `debug` 日志记录工作，需要使用 `--with-debug` 来构建nginx，请参见[调试日志](../介绍/调试日志.md)。
-
-> 从 1.7.11 版本开始，该指令可以指定 `stream` 级别，从 1.9.0 版本开始可以指定 `mail` 级别。
 
 ### env
 
@@ -167,6 +150,37 @@ env OPENSSL_ALLOW_PROXY_CERTS=1;
 
 > NGINX 环境变量由 nginx 内部使用，不应由用户直接设置。
 
+
+### error_log
+
+|\-|说明|
+|------:|------|
+|**语法**|**error_log** `file [level]`;|
+|**默认**|error_log logs/error.log error;|
+|**上下文**|main、http、mail、stream、server、location|
+
+配置日志。可以在同一级别指定几个日志（1.5.2）。如果在 `main` 配置级别将日志写入一个未明确定义文件，则将使用默认文件。
+
+第一个参数定义了一个将存储日志的 `file`。特殊值 `stderr` 选择标准错误文件。可以通过指定 `syslog:` 前缀来配置记录日志到 [syslog](../介绍/记录日志到syslog.md)。可以通过指定 `memory:` 前缀和缓冲区 `size` 来配置记录日志到[循环内存缓冲区](../介绍/记录日志到syslog.md)，此通常用于调试（1.7.11）。
+
+第二个参数确定日志记录的 `level`，可以是以下之一：`debug`、`info`、`notice`、`warn`、`error`、`crit`、`alert` 或`emerg`。上述日志级别按严重性递增排列。设置某个日志级别将造成所有指定的消息和更严重的日志级别被记录。例如，默认级别 `error` 将导致 `error`、`crit`、`alert`和 `emerg` 消息被记录。如果省略此参数，则使用 `error`。
+
+> 为了使 `debug` 日志记录工作，需要使用 `--with-debug` 来构建nginx，请参见[调试日志](../介绍/调试日志.md)。
+
+> 从 1.7.11 版本开始，该指令可以指定 `stream` 级别，从 1.9.0 版本开始可以指定 `mail` 级别。
+
+日志级别定义：
+```
+emerg 紧急 - 系统无法使用。 
+alert 必须立即采取措施。 
+crit 致命情况。 
+error 错误情况。 
+warn 警告情况。  
+notice 一般重要情况。
+info 普通信息。 
+debug 调试级别信息
+```
+
 ### events
 
 |\-|说明|
@@ -175,7 +189,7 @@ env OPENSSL_ALLOW_PROXY_CERTS=1;
 |**默认**|——|
 |**上下文**|main|
 
-提供指定影响连接处理指令的配置文件上下文。
+提供配置文件上下文，用于指定影响连接处理的指令。
 
 ### include
 
@@ -226,7 +240,7 @@ nginx 使用锁机制来实现 [accept_mutex](#accept_mutex) 并序列化对共�
 |**默认**|master_process on;|
 |**上下文**|main|
 
-用于决定是否启动工作进程。该指令适用于 nginx 开发人员。
+用于决定是否仅启动工作进程，而不启动主进程。该指令适用于 nginx 开发人员，方便单进程模式下debug程序。
 
 ### multi_accept
 
@@ -284,11 +298,11 @@ PCRE JIT 可以明显地加快正则表达式的处理。
 |**上下文**|main|
 |**提示**|该指令在 1.7.11 版本中出现|
 
-定义命名的线程池用于多线程读取和发送文件，而[无需阻塞](#aio)工作进程。
+定义线程池的名称和参数，用于多线程方式读取和发送文件，而[无需阻塞](#aio)工作进程。
 
 `threads` 参数定义池中的线程数量。
 
-如果池中的所有线程都处于繁忙状态，则新任务将在队列中等待。`max_queue` 参数限制队列中允许等待的任务数。缺省情况下，队列中最多可以等待 65536 个任务。当队列溢出时，任务完成并出现错误。
+如果池中的所有线程都处于繁忙状态，则新任务将在队列中等待。`max_queue` 参数限制队列中允许等待的任务数。缺省情况下，队列中最多可以等待 65536 个任务。当队列溢出时，任务直接完成并报错。
 
 ### timer_resolution
 
@@ -298,7 +312,7 @@ PCRE JIT 可以明显地加快正则表达式的处理。
 |**默认**|——|
 |**上下文**|main|
 
-减少工作进程中的计时器分辨率，从而减少 `gettimeofday()` 的系统调用次数。默认情况下，每次接收到内核事件时都会调用 `gettimeofday()`。随着分辨率的降低，`gettimeofday()` 仅在指定的时间间隔内被调用一次。
+减少工作进程中的计时器分辨率（允许一定误差），从而减少 `gettimeofday()` 的系统调用次数。默认情况下，每次接收到内核事件时都会调用 `gettimeofday()`。随着分辨率的降低，`gettimeofday()` 仅在指定的时间间隔内被调用一次。
 
 示例：
 
@@ -330,7 +344,7 @@ timer_resolution 100ms;
 |**默认**|——|
 |**上下文**|events|
 
-定义工作进程使用的 `user` 和 `group` 凭据。如果省略 `group`，则使用其名称与 `user` 相等的组。
+定义工作进程使用的 用户（`user`） 和 用户组（`group`） 。如果省略 `group`，则使用其名称与 `user` 相等的组。
 
 ### worker_aio_requests
 
@@ -341,7 +355,7 @@ timer_resolution 100ms;
 |**上下文**|events|
 |**提示**|该指令在 1.1.4 和 1.0.7 版本中出现|
 
-当使用有 [epoll](#epoll) 连接处理方式的 [aio](#aio) 时，为单个工作进程设置未完成异步 I/O 操作的最大 `number`（数量）。
+使用 [epoll](#epoll) 连接处理方式的 [aio](#aio) 时，为单个工作进程设置最大未完成异步 I/O 操作`number`（数量）。
 
 ### worker_connections
 
@@ -363,7 +377,7 @@ timer_resolution 100ms;
 |**默认**|——|
 |**上下文**|main|
 
-将工作进程绑定到一组 CPU。每个 CPU 组由允许的 CPU 的位掩码表示。应为每个工作进程定义一个单独的组。默认情况下，工作进程没有绑定任何特定的 CPU。
+CPU亲和性配置。将工作进程绑定到一组 CPU。每个 CPU 组由允许的 CPU 的位掩码表示。应为每个工作进程定义一个单独的组。默认情况下，工作进程不绑定到任何特定的 CPU。
 
 示例：
 
@@ -454,7 +468,7 @@ worker_priority -10;
 |**上下文**|main|
 |**提示**|该指令在 1.11.11 版本中出现|
 
-为正常关闭工作进程配置超时。当时间到期时，nginx 将尝试关闭当前打开的所有连接以便于关闭工作进程。
+优雅关闭工作进程时的超时等待时间。当等待超时时，nginx 将尝试关闭当前打开的所有连接以便于关闭工作进程。
 
 ### working_directory
 
@@ -464,7 +478,7 @@ worker_priority -10;
 |**默认**|——|
 |**上下文**|main|
 
-定义工作进程的当前工作目录。它主要用于编写核心文件时，在这种情况下，工作进程应有指定目录的写入权限。
+指定工作进程的工作目录。主要用于写核心文件，工作进程应对指定的目录有写入权限。
 
 ## 原文档
 
