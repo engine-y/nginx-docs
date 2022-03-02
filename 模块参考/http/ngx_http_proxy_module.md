@@ -24,6 +24,7 @@
     - [proxy_cache_valid](#proxy_cache_valid)
     - [proxy_connect_timeout](#proxy_connect_timeout)
     - [proxy_cookie_domain](#proxy_cookie_domain)
+    - [proxy_cookie_flags](#proxy_cookie_flags)
     - [proxy_cookie_path](#proxy_cookie_path)
     - [proxy_force_ranges](#proxy_force_ranges)
     - [proxy_headers_hash_bucket_size](#proxy_headers_hash_bucket_size)
@@ -54,6 +55,7 @@
     - [proxy_ssl_certificate](#proxy_ssl_certificate)
     - [proxy_ssl_certificate_key](#proxy_ssl_certificate_key)
     - [proxy_ssl_ciphers](#proxy_ssl_ciphers)
+    - [proxy_ssl_conf_command](#proxy_ssl_conf_command)
     - [proxy_ssl_crl](#proxy_ssl_crl)
     - [proxy_ssl_name](#proxy_ssl_name)
     - [proxy_ssl_password_file](#proxy_ssl_password_file)
@@ -96,9 +98,9 @@ location / {
 |**上下文**|http、server、location|
 |**提示**|该指令在 0.8.22 版本中出现|
 
-连接到一个指定了本地 IP 地址和可选端口（1.11.2）的代理服务器。参数值可以包含变量（1.3.12）。特殊值 `off` （1.3.12）取消从上层配置级别继承的 `proxy_bind` 指令的作用，其允许系统自动分配本地 IP 地址和端口。
+在与上游服务器创建连接时，使用指定的本地IP或端口（可选），参数值可以包含变量（1.3.12）。特殊值 `off` （1.3.12）取消从上层配置级别继承的 `proxy_bind` 指令的作用，其允许系统自动分配本地 IP 地址和端口。
 
-`transparent` 参数（1.11.0）允许出站从非本地 IP 地址到代理服务器的连接（例如，来自客户端的真实 IP 地址）：
+`transparent` 参数（1.11.0）允许使用非本地IP连接到上游代理服务器（例如，来自客户端的真实 IP 地址）：
 
 ```nginx
 proxy_bind $remote_addr transparent;
@@ -130,7 +132,7 @@ proxy_bind $remote_addr transparent;
 
 当缓冲被禁用时，nginx 在收到响应时立即同步传递给客户端，不会尝试从代理服务器读取整个响应。nginx 一次可以从服务器接收的最大数据量由 [proxy_buffer_size](#proxy_buffer_size) 指令设置。
 
-通过在 `X-Accel-Buffering` 响应头字段中通过 `yes` 或 `no` 也可以启用或禁用缓冲。可以使用 [proxy_ignore_headers](#proxy_ignore_headers) 指令禁用此功能。
+通过在 `X-Accel-Buffering` 响应头字段中设置值 `yes` 或 `no` 也可以启用或禁用缓冲。可以使用 [proxy_ignore_headers](#proxy_ignore_headers) 指令禁用此功能。
 
 ### proxy_buffers
 
@@ -152,6 +154,8 @@ proxy_bind $remote_addr transparent;
 
 当启用代理服务器响应[缓冲](#proxy_buffering)时，限制缓冲区的总大小（`size`）在当响应尚未被完全读取时可向客户端发送响应。同时，其余的缓冲区可以用来读取响应，如果需要的话，缓冲部分响应到临时文件中。默认情况下，`size` 受 [proxy_buffer_size](#proxy_buffer_size) 和 [proxy_buffers](#proxy_buffers) 指令设置的两个缓冲区的大小限制。
 
+> 译者注：例如，总缓冲区proxy_buffers设置为16K，但是proxy_busy_buffers_size设置为8K，此时当缓冲区收到8K数据后，就可以直接给下游客户端发送数据，不等缓冲区写满。
+
 ### proxy_cache
 
 |\-|说明|
@@ -160,7 +164,7 @@ proxy_bind $remote_addr transparent;
 |**默认**|proxy_cache off;|
 |**上下文**|http、server、location|
 
-定义用于缓存的共享内存区域。同一个区域可以在几个地方使用。参数值可以包含变量（1.7.9）。`off` 参数将禁用从上级配置级别继承的缓存配置。
+定义用于缓存的共享内存区域名称。同一个区域可以在多个地方使用。参数值可以包含变量（1.7.9）。`off` 参数将禁用从上级配置级别继承的缓存配置。
 
 ### proxy_cache_background_update
 
@@ -171,7 +175,7 @@ proxy_bind $remote_addr transparent;
 |**上下文**|http、server、location|
 |**提示**|该指令在 1.11.10 版本中出现|
 
-允许启动后台子请求来更新过期的缓存项，而过时的缓存响应则返回给客户端。请注意，有必要在更新时[允许](#proxy_cache_use_stale_updating)使用陈旧的缓存响应。
+允许启动后台子请求来更新过期的响应缓存项，与此同时将过期的响应缓存返回给客户端。请注意，需要开启在更新时[允许](#proxy_cache_use_stale_updating)使用过期的响应缓存（避免无值可返回）。
 
 ### proxy_cache_bypass
 
@@ -225,12 +229,12 @@ proxy_cache_key $scheme$proxy_host$uri$is_args$args;
 
 |\-|说明|
 |------:|------|
-|**语法**|**proxy_cache_key** `on` &#124; `off`;|
+|**语法**|**proxy_cache_lock** `on` &#124; `off`;|
 |**默认**|proxy_cache_lock off;|
 |**上下文**|http、server、location|
 |**提示**|该指令在 1.1.12 版本中出现|
 
-启用后，通过将请求传递给代理服务器，一次只允许一个请求填充根据 [proxy_cache_key](#proxy_cache_key) 指令标识的新缓存元素。同一缓存元素的其他请求将等待响应出现在缓存中或缓存锁定以释放此元素，直到 [proxy_cache_lock_timeout](#proxy_cache_lock_timeout) 指令设置的时间。
+启用后，将以 [proxy_cache_key](#proxy_cache_key) 获取的缓存key为锁，一次仅允许一个请求到上游代理服务器获取新的响应用于缓存。其他请求相同缓存key的请求则等待，直到可以获取到缓存值，或者等待超时[proxy_cache_lock_timeout](#proxy_cache_lock_timeout) 。
 
 ### proxy_cache_lock_age
 
@@ -241,7 +245,7 @@ proxy_cache_key $scheme$proxy_host$uri$is_args$args;
 |**上下文**|http、server、location|
 |**提示**|该指令在 1.7.8 版本中出现|
 
-如果传递给代理服务器以填充新缓存元素的最后一个请求在指定时间（`time`）内没有完成，则可以将另一个请求传递给代理服务器。
+当开启从上游代理服务器获取响应内容锁机制时（proxy_cache_lock on;），设定锁的时间（`time`），在该时间内没有完成，则可以将另一个请求传递给代理服务器。
 
 ### proxy_cache_lock_timeout
 
@@ -254,7 +258,7 @@ proxy_cache_key $scheme$proxy_host$uri$is_args$args;
 
 设置 [proxy_cache_lock](#proxy_cache_lock) 的超时时间。当时间（`time`）到期时，请求将被传递到代理服务器，但响应不会被缓存。
 
-> 在 1.7.8 之前可以缓存响应。
+> 在 1.7.8 之前可以缓存响应。用于避免大量请求等待积压。
 
 ### proxy_cache_max_range_offset
 
@@ -266,6 +270,10 @@ proxy_cache_key $scheme$proxy_host$uri$is_args$args;
 |**提示**|该指令在 1.11.6 版本中出现|
 
 设置字节范围（byte-range）请求的偏移量。如果范围超出偏移量，则范围请求将传递到代理服务器，并且不会缓存响应。
+
+> 译者注：当客户端仅向服务器请求所请求文件的一部分时，就会发生字节范围请求。这样做的目的本质上是通过避免在只需要一小部分时下载完整文件的需要来节省带宽使用。
+> 为了发起字节范围请求，客户端将使用范围请求标头来指定它请求的字节范围（例如Range: bytes=0-499）。此外，服务器必须Accept-Ranges在其响应中包含标头（例如Accept-Ranges: bytes）。
+> 通常用于大媒体文件请求。
 
 ### proxy_cache_methods
 
@@ -286,7 +294,7 @@ proxy_cache_key $scheme$proxy_host$uri$is_args$args;
 |**默认**|proxy_cache_min_uses 1;|
 |**上下文**|http、server、location|
 
-设置在 `number` 此请求后缓存响应。
+设置在 `number` 次相同请求后，将缓存此请求的响应。
 
 ### proxy_cache_path
 
@@ -320,7 +328,7 @@ proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=one:10m;
 
 启动一分钟后，特殊**缓存加载程序**进程被激活。它将有关存储在文件系统中的先前缓存数据的信息加载到缓存区。加载也是在迭代中完成的。在一次迭代期间，不会加载超过 `loader_files` 项（默认情况下为 100）。此外，一次迭代的持续时间受 `loader_threshold` 参数限制（默认为 200 毫秒）。在迭代之间，由 loader_sleep 参数（默认为 50 毫秒）配置间隔时间。
 
-此外，以下参数作为我们[商业订阅](http://nginx.com/products/?_ga=2.38653990.485685795.1545557717-1363596925.1544107800)的一部分提供：
+此外，以下参数作为我们[商业订阅](http://nginx.com/products) 的一部分提供：
 
 - `purger=on|off`
 
@@ -352,7 +360,7 @@ proxy_cache_path /data/nginx/cache levels=1:2 keys_zone=one:10m;
 
 定义将请求视为缓存清除请求的条件。如果该字符串参数至少有一个值不为空并且不等于 `0`，则删除有相应[缓存 key](#proxy_cache_key) 的缓存项。通过返回 204（No Content）响应来指示操作成功。
 
-如果清除请求的[缓存 key](#proxy_cache_key) 以星号（`*`）结尾，则将从缓存中删除与通配符 key 匹配的所有缓存项。但是，这些条目将保留在磁盘上，直到它们因为[非活跃](#proxy_cache_path)而被删除，或被[缓存清除程序](#purger)（1.7.12）处理，抑或客户端尝试访问它们。
+如果清除请求的[缓存 key](#proxy_cache_key) 以星号（`*`）结尾，则将从缓存中删除与通配符 key 匹配的所有缓存项。但是，这些条目将保留在磁盘上，直到它们因为[非活跃](#proxy_cache_path) 而被删除，或被[缓存清除程序](#purger)（1.7.12）处理，抑或客户端尝试访问它们。
 
 配置示例：
 
@@ -375,7 +383,7 @@ server {
 }
 ```
 
-> 此功能作为我们[商业订阅](http://nginx.com/products/?_ga=2.96279577.485685795.1545557717-1363596925.1544107800)的一部分提供。
+> 此功能作为我们[商业订阅](http://nginx.com/products) 的一部分提供。
 
 ### proxy_cache_revalidate
 
@@ -408,7 +416,7 @@ server {
 
 - **Cache-Control** 头字段的 [stale-if-error](https://tools.ietf.org/html/rfc5861#section-4) 扩展允许在出现错误时使用过时的缓存响应。
 
-要在填充新缓存元素时最大化减少对代理服务器的访问次数，可以使用 [proxy_cache_lock](#proxy_cache_lock) 指令。
+要在获取新响应用于缓存时最大化减少对代理服务器的访问次数，可以使用 [proxy_cache_lock](#proxy_cache_lock) 指令。
 
 ### proxy_cache_valid
 
@@ -461,6 +469,68 @@ proxy_cache_valid any      1m;
 |**上下文**|http、server、location|
 
 定义与代理服务器建立连接的超时时间。应该注意，此超时时间通常不会超过 75 秒。
+
+### proxy_cookie_domain
+
+|\-|说明|
+|------:|------|
+|**语法**|**proxy_cookie_domain** `off`; <br/> **proxy_cookie_domain** `domain replacement`;|
+|**默认**|proxy_cookie_domain off;|
+|**上下文**|http、server、location|
+
+设置在代理服务器中响应头中"Set-Cookie"域名信息，假定代理服务器返回的"Set-Cookie"头包含属性"domain=localhost"，指令：
+```nginx
+proxy_cookie_domain localhost example.org;
+```
+将会重写属性为“domain=example.org”。
+
+以"."开头的域名、替换字符串、域名属性会被忽略，匹配不区分大小写。
+
+域名和替换字符串可以包含变量，如：
+
+```nginx
+proxy_cookie_domain www.$host $host;
+```
+
+指令还可以使用正则表达式，在这种情况下，域名需要从“~”服务开始，正则表达式可以包含命名和位置捕获，且替换符可以引用它们：
+```nginx
+proxy_cookie_domain ~\.(?P<sl_domain>[-0-9a-z]+\.[a-z]+)$ $sl_domain;
+```
+
+可以在同一级别上指定多个proxy_cookie_domain指令：
+
+```nginx
+proxy_cookie_domain localhost example.org;
+proxy_cookie_domain ~\.([a-z]+\.[a-z]+)$ $1;
+```
+
+如果可以将多个指令应用于 cookie，则将选择第一个匹配的指令。
+
+`off`参数用于取消从上级配置继承来的 proxy_cookie_domain 指令。
+
+### proxy_cookie_flags
+
+|\-|说明|
+|------:|------|
+|**语法**|**proxy_cookie_flags** `off &#124; cookie [flag ...]`;|
+|**默认**|proxy_cookie_flags off;|
+|**上下文**|http、server、location|
+
+为 cookie 设置一个或多个标志。Cookie可以包含文本、变量及其组合。Flag可以包含文本、变量及其组合 (1.19.8)。
+为secure, httponly, samesite=strict, samesite=lax, samesite=none 参数增加相应的标识，为nosecure, nohttponly, nosamesit参数删除相应的标识。
+
+也可以使用正则表达式指定 cookie。在这种情况下，cookie应从“~”符号开始。
+
+可以在同一配置级别上指定多个proxy_cookie_flags指令：
+
+```nginx
+proxy_cookie_flags one httponly;
+proxy_cookie_flags ~ nosecure samesite=strict;
+```
+
+如果可以将多个指令应用于 cookie，则将选择第一个匹配的指令。在该示例中，该httponly标志被添加到 Cookie `one`中，对于所有其他Cookie，`samesite=strict`标志被添加并且`secure`标志被删除。
+
+`off`参数用于取消从上级配置继承来的 proxy_cookie_flags 指令。
 
 ### proxy_cookie_path
 
@@ -517,7 +587,7 @@ proxy_cookie_path ~*^/user/([^/]+) /u/$1;
 
 无论代理服务器中的 **Accept-Ranges** 字段如何，对代理服务器的缓存和未缓存响应都启用字节范围（byte-range）支持。
 
-### proxy_force_ranges
+### proxy_headers_hash_bucket_size
 
 |\-|说明|
 |------:|------|
@@ -545,7 +615,7 @@ proxy_cookie_path ~*^/user/([^/]+) /u/$1;
 |**默认**|——|
 |**上下文**|http、server、location|
 
-默认情况下，nginx 不会从代理服务器向客户端的响应中传递头字段 **Date**、**Server**、**X-Pad** 和 **X-Accel-...**。`proxy_hide_header` 指令设置不传递的其他字段。相反，如果需要允许传递字段，则可以使用 [proxy_pass_header](#proxy_pass_header) 指令设置。
+默认情况下，nginx 不会从代理服务器向客户端的响应中传递头字段 **Date**、**Server**、**X-Pad** 和 **X-Accel-...**。`proxy_hide_header` 指令设置更多不传递的头字段。相反，如果需要允许传递字段，则可以使用 [proxy_pass_header](#proxy_pass_header) 指令设置。
 
 ### proxy_http_version
 
@@ -566,7 +636,7 @@ proxy_cookie_path ~*^/user/([^/]+) /u/$1;
 |**默认**|proxy_ignore_client_abort off;|
 |**上下文**|http、server、location|
 
-确定在客户端关闭连接不等待响应时是否应关闭与代理服务器的连接。
+当客户端不等待响应直接断开连接时，是否直接关闭与上游代理服务器的连接。
 
 ### proxy_ignore_headers
 
@@ -594,7 +664,7 @@ proxy_cookie_path ~*^/user/([^/]+) /u/$1;
 |**默认**|proxy_intercept_errors off;|
 |**上下文**|http、server、location|
 
-确定状态码大于或等于 300 的代理响应是应该传递给客户端还是拦截并重定向到 nginx 以便使用 [error_page](ngx_http_core_module.md#error_page) 指令进行处理。
+确定状态码大于或等于 300 的代理响应是应该传递给客户端，还是拦截并重定向以便使用 [error_page](ngx_http_core_module.md#error_page) 指令进行处理。
 
 ### proxy_limit_rate
 
@@ -756,11 +826,11 @@ proxy_pass http://unix:/tmp/backend.socket:/uri/;
 
 如果域名解析为多个地址，则所有这些地址将以轮询的方式使用。此外，可以将地址指定为[服务器组](ngx_http_upstream_module.md)。
 
-参数值可以包含变量。在这种情况下，如果将地址指定为域名，则在所描述的服务器组中搜索名称，如果未找到，则使用[解析器](ngx_http_core_module.md#resolver)确定。
+参数值可以包含变量。在这种情况下，如果将地址指定为域名，则在所描述的服务器组（upstream）中搜索名称，如果未找到，则使用[解析器](ngx_http_core_module.md#resolver)确定。
 
 请求 URI 按如下方式传递给服务器：
 
-- 如果指定了带有 URI 的 `proxy_pass`，那么当请求传递给服务器时，与该位置（location）匹配的[规范化](ngx_http_core_module.md#location)请求 URI 的部分将被指令中指定的 URI 替换：
+- 如果指定了带有 URI 的 `proxy_pass`，那么当请求传递给代理服务器时，与该位置（location）匹配的[规范化](ngx_http_core_module.md#location)请求 URI 的部分将被指令中指定的 URI 替换：
 
 
     ```nginx
@@ -781,8 +851,8 @@ proxy_pass http://unix:/tmp/backend.socket:/uri/;
 
 在某些情况下，无法确定请求 URI 要替换的部分：
 
-- 使用正则表达式指定 location （位置）时，以及在命名位置内指定位置。
-在这些情况下，应指定 `proxy_pass` 而不使用 URI。
+- 使用正则表达式定义 location （位置）时，以及在命名location内。
+在这些情况下，应指定 `proxy_pass` 而不带 URI。
 
 - 使用 [rewrite](ngx_http_rewrite_module.md#rewrite) 指令在代理位置内更改 URI 时，将使用相同的配置来处理请求（`break`）：
 
@@ -911,7 +981,7 @@ location /one/ {
 
 如果使用变量指定 [proxy_pass](ngx_http_proxy_module.md#proxy_pass)，则不允许使用 `default` 参数。
 
-`replacement` 字符串可以包换变量：
+`replacement` 字符串可以包含变量：
 
 ```nginx
 proxy_redirect http://localhost:8000/ http://$host:$server_port/;
@@ -956,11 +1026,11 @@ proxy_redirect / /;
 
 启用或禁用客户端请求体缓冲。
 
-启用缓冲后，在将请求发送到代理服务器之前，将从客户端[读取](ngx_http_core_module.md#client_body_buffer_size)整个请求体。
+启用缓冲，先读取客户端请求体完整[读取](ngx_http_core_module.md#client_body_buffer_size)后，再将请求发送到代理服务器。
 
-禁用缓冲时，请求体在收到时立即发送到代理服务器。在这种情况下，如果 nginx 已经开始发送请求体，则无法将请求传递给[下一个服务器](#proxy_next_upstream)。
+禁用缓冲，请求体在收到后立即发送到代理服务器。在这种情况下，如果 nginx 已经开始发送请求体，则无法将请求传递给[下一个服务器](#proxy_next_upstream)  （即，没有请求缓冲时，已经开始读取内容时，无发再做fail over）。
 
-当使用 HTTP/1.1 分块传输编码发送原始请求体时，无论指令值如何，都将缓冲请求体，除非为代理[启用](#proxy_http_version)了 HTTP/1.1。
+当使用 HTTP/1.1 分块传输编码发送原始请求体时，无论指令值如何，都将缓冲请求体，除非[启用](#proxy_http_version)了 HTTP/1.1进行代理。
 
 ### proxy_send_lowat
 
@@ -1046,6 +1116,8 @@ proxy_set_header Accept-Encoding "";
 
 配置到代理服务器的传出连接的 **TCP keepalive** 行为。默认情况下，操作系统的设置对 socket 有影响。如果指令设置为值 `on`，则为 socket 打开 `SO_KEEPALIVE` socket 选项。
 
+> 开启TCP的心跳保活机制
+
 ### proxy_ssl_certificate
 
 |\-|说明|
@@ -1056,6 +1128,8 @@ proxy_set_header Accept-Encoding "";
 |**提示**|该指令在 1.7.8 版本中出现|
 
 指定一个 PEM 格式的证书文件（`file`），该证书用于 HTTPS 代理服务器身份验证。
+
+> 从 1.21.0 开始, 文件名支持使用变量。
 
 ### proxy_ssl_certificate_key
 
@@ -1070,6 +1144,8 @@ proxy_set_header Accept-Encoding "";
 
 可以指定 `engine:name:id` 来代替 `file`（1.7.9），它将从名为 `name` 的 OpenSSL 引擎加载 id 为 `id` 的密钥。
 
+> 从 1.21.0 开始, 文件名支持使用变量。
+> 
 ### proxy_ssl_ciphers
 
 |\-|说明|
@@ -1082,6 +1158,24 @@ proxy_set_header Accept-Encoding "";
 指定对 HTTPS 代理服务器的请求已启用密码。密码应为 OpenSSL 库支持的格式。
 
 可以使用 `openssl ciphers` 命令查看完整的支持列表。
+
+
+### proxy_ssl_conf_command
+
+|\-|说明|
+|------:|------|
+|**语法**|**proxy_ssl_conf_command** `command`;|
+|**默认**|——|
+|**上下文**|http、server、location|
+|**提示**|该指令在 1.19.4 版本中出现|
+
+在与代理 HTTPS 服务器建立连接时 设置任意 OpenSSL 配置 [命令](https://www.openssl.org/docs/man1.1.1/man3/SSL_CONF_cmd.html) 。
+
+>使用 OpenSSL 1.0.2 或更高版本时支持该指令。
+
+指令proxy_ssl_conf_command可以在同一级别上配置多个。当前配置级别没有定义时，可从先前的配置级别继承。
+
+>请注意，直接配置 OpenSSL 可能会导致意外行为。
 
 ### proxy_ssl_crl
 
@@ -1138,7 +1232,7 @@ proxy_set_header Accept-Encoding "";
 |**上下文**|http、server、location|
 |**提示**|该指令在 1.7.0 版本中出现|
 
-在与 HTTPS 代理服务器建立连接时，启用或禁用通过 [TLS 服务器名称指示扩展](http://en.wikipedia.org/wiki/Server_Name_Indication)（SNI，RFC 6066）传递服务器名称。
+在与 HTTPS 代理服务器建立连接时，启用或禁用通过 [TLS 服务器名称指示扩展](http://en.wikipedia.org/wiki/Server_Name_Indication) （SNI，RFC 6066）传递服务器名称。
 
 ### proxy_ssl_session_reuse
 
@@ -1308,8 +1402,6 @@ proxy_temp_path /spool/nginx/proxy_temp 1 2;
 - `$proxy_add_x_forwarded_for`
 
     **X-Forwarded-For** 客户端请求头字段，其中附加了 `$remote_addr` 变量，以逗号分割。如果客户端请求头中不存在 **X-Forwarded-For”** 字段，则 `$proxy_add_x_forwarded_for` 变量等于 `$remote_addr` 变量。
-
-**待续……**
 
 ## 原文档
 [http://nginx.org/en/docs/http/ngx_http_proxy_module.html](http://nginx.org/en/docs/http/ngx_http_proxy_module.html)

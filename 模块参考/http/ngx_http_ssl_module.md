@@ -15,6 +15,7 @@
     - [ssl_password_file](#ssl_password_file)
     - [ssl_prefer_server_ciphers](#ssl_prefer_server_ciphers)
     - [ssl_protocols](#ssl_protocols)
+    - [ssl_reject_handshake](#ssl_reject_handshake)
     - [ssl_session_cache](#ssl_session_cache)
     - [ssl_session_ticket_key](#ssl_session_ticket_key)
     - [ssl_session_tickets](#ssl_session_tickets)
@@ -78,7 +79,7 @@ http {
 |\-|说明|
 |:------|:------|
 |**语法**|**ssl** `on` &#124; `off`;|
-|**默认**|ssi off;|
+|**默认**|ssl off;|
 |**上下文**|http、server|
 
 该指令在 1.15.0 版本中已过时。应使用 [listen](ngx_http_core_module.md#listen) 指令的 `ssl` 参数设置。
@@ -310,6 +311,32 @@ http {
 > TLSv1.1 和 TLSv1.2 参数（1.1.13、1.0.12）仅在使用 OpenSSL 1.0.1 或更高版本时有效。
 
 > 仅当使用 TLSv1.3 支持构建的 OpenSSL 1.1.1 时，TLSv1.3 参数（1.13.0）才有效。
+
+### ssl_reject_handshake
+
+|\-|说明|
+|:------|:------|
+|**语法**|**ssl_reject_handshake** `on` &#124; `off`;|
+|**默认**|ssl_reject_handshake off;|
+|**上下文**|http、server|
+|**提示**|该指令在 1.19.4 版本中出现|
+
+如果开启，SSL握手在 [server](ngx_http_core_module.md#server) 指令块中将被拒绝。
+
+例如，在以下配置中，SSL 握手不是服务器名称example.com将被拒绝：
+```nginx
+server {
+    listen               443 ssl default_server;
+    ssl_reject_handshake on;
+}
+
+server {
+    listen              443 ssl;
+    server_name         example.com;
+    ssl_certificate     example.com.crt;
+    ssl_certificate_key example.com.key;
+}
+```
 
 ### ssl_session_cache
 

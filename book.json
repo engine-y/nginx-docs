@@ -1,10 +1,10 @@
 {
   "title": "Nginx中文文档",
-  "author": "DocsHome",
+  "author": "engine-y",
   "language": "zh-hans",
   "links": {
     "sidebar": {
-      "Home": "https://github.com/DocsHome"
+      "Home": "https://github.com/engine-y"
     }
   },
   "plugins": [
@@ -16,20 +16,20 @@
   ],
   "pluginsConfig": {
     "github": {
-      "url": "https://github.com/DocsHome/nginx-docs"
-    },    
+      "url": "https://github.com/engine-y/nginx-docs"
+    },
     "prism": {
       "css": [
         "prismjs/themes/prism-solarizedlight.css"
       ]
     },
     "tbfed-pagefooter": {
-      "copyright": "Copyright &copy <a style=\"font-weight: bold\" href=\"https://github.com/DocsHome/nginx-docs\">Oopsguy.com</a> 2017",
+      "copyright": "Copyright &copy <a style=\"font-weight: bold\" href=\"https://github.com/engine-y/nginx-docs\">Engine-Y</a> 2022",
       "modify_label": "最后更新时间：",
       "modify_format": "YYYY-MM-DD HH:mm:ss"
     },
     "github-buttons": {
-      "repo": "DocsHome/nginx-docs",
+      "repo": "engine-y/nginx-docs",
       "types": [
           "star",
           "watch"
